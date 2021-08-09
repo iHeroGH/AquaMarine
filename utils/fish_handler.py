@@ -241,7 +241,7 @@ async def check_price(user_id: int, cost: int, bot) -> bool:
     """
     Returns if a user_id has enough money based on the cost.
     """
-    async with bot.DatabaseConnection() as db:
+    async with bot.database() as db:
         user_rows = await db(
             """SELECT balance FROM user_balance WHERE user_id=$1""",
             user_id,
@@ -258,7 +258,7 @@ async def buying_singular(ctx, item: str, bot):
     themes = ["Plant Life"]
 
     # Gets the tank info for user
-    async with bot.DatabaseConnection() as db:
+    async with bot.database() as db:
         tank_row = await db("""SELECT * FROM user_tank_inventory WHERE user_id=$1""", ctx.author.id)
     
     # Tank slot/name info variables
@@ -315,13 +315,13 @@ async def buying_singular(ctx, item: str, bot):
                 return False
             
             # Adds the tank to the users tanks
-            async with bot.DatabaseConnection() as db:
+            async with bot.database() as db:
                 await db("""UPDATE user_tank_inventory SET tank[$1] = TRUE, tank_type[$1] = $2, tank_name[$1]=$3, fish_room[$1]=$4, tank_theme[$1]='Aqua' WHERE user_id=$5""", int(message), item, name, tank_size_values[item], ctx.author.id)
         else:
 
             # If the tank is just updating a tank, updates the tank
             await ctx.send(f"Tank {tank_names[int(message)-1]} has been updated to {item}!")
-            async with bot.DatabaseConnection() as db:
+            async with bot.database() as db:
                 await db("""UPDATE user_tank_inventory SET tank_type[$1] = $2, fish_room[$1]=fish_room[$1]+$3 WHERE user_id=$4 AND tank_name[$1]=$5""", int(message), item, int(tank_size_values[item] - tank_size_values[tank_row[0]['tank_type'][int(message)-1]]), ctx.author.id, tank_names[int(message)-1])
     
     # If the item is a theme...
@@ -337,6 +337,6 @@ async def buying_singular(ctx, item: str, bot):
         except asyncio.TimeoutError:
             await ctx.send("Timed out asking for tank name, no available name given.")
             return False
-        async with bot.DatabaseConnection() as db:
+        async with bot.database() as db:
                 await db("""UPDATE user_tank_inventory SET tank_theme[$1] = $2 WHERE user_id=$3""", tank_names.index(theme_message), item.replace(" ", "_"), ctx.author.id)
 
